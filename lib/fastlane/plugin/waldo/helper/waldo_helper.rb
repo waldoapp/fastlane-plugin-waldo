@@ -1,13 +1,13 @@
+require 'fastlane_core/command_executor'
 require 'fastlane_core/ui/ui'
-require 'shellwords'
 
 module Fastlane
   UI = FastlaneCore::UI unless Fastlane.const_defined?("UI")
 
   module Helper
     class WaldoHelper
-      def command_path
-        path = Dir["/usr/local/bin/waldo"].last
+      def find_waldo_command()
+        path = FastlaneCore::CommandExecutor.which('waldo')
 
         unless path
           UI.user_error!("Waldo not installed, download from https://github.com/waldoapp/Waldo")
@@ -18,7 +18,7 @@ module Fastlane
 
       def generate_command(params)
         command = []
-        command << command_path.shellescape
+        command << find_waldo_command()
         command << "upload '#{params[:app_path]}'"
         command << "--application '#{params[:application_id]}'"
         command << "--key '#{params[:api_key]}'"
