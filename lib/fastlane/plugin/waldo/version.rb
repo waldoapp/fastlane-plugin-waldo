@@ -1,5 +1,6 @@
 module Fastlane
   module Waldo
-    VERSION = "0.1.0"
+    # Keep plugin version in sync with binary version
+    VERSION = "0.21.2"
   end
 end

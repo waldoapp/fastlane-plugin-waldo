@@ -1,3 +1,3 @@
 lane :test do
-  waldo
+  waldo_update
 end

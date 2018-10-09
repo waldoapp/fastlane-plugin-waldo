@@ -1,32 +1,27 @@
 require 'fastlane_core/command_executor'
-require 'fastlane_core/ui/ui'
 
 module Fastlane
-  UI = FastlaneCore::UI unless Fastlane.const_defined?("UI")
-
   module Helper
     class WaldoHelper
-      def find_waldo_command()
+      def self.find_waldo_command()
         path = FastlaneCore::CommandExecutor.which('waldo')
 
         unless path
-          UI.user_error!("Waldo not installed, download from https://github.com/waldoapp/Waldo")
+          UI.user_error!("Waldo not installed, download from https://github.com/waldoapp/waldo-cli/releases")
         end
 
         return path
       end
 
-      def generate_command(params)
+      def self.generate_waldo_command(cmd, params)
         command = []
         command << find_waldo_command()
-        command << "upload '#{params[:app_path]}'"
-        command << "--application '#{params[:application_id]}'"
-        command << "--key '#{params[:api_key]}'"
-        command << "--package '#{params[:package_name]}'"
-        command << "--trace '#{params[:trace]}'" if params[:trace]
-        command << "--variant '#{params[:variant_name]}'"
+        command << "#{cmd} '#{params[:ipa_path]}'"
+        command << "--application '#{params[:application_id]}'" if params[:application_id]
+        command << "--configuration '#{params[:configuration_path]}'" if params[:configuration_path]
+        command << "--key '#{params[:api_key]}'" if params[:api_key]
 
-        return command
+        return command.join(' ')
       end
     end
   end

@@ -15,55 +15,67 @@ fastlane add_plugin waldo
 
 [Waldo](https://www.waldo.io) provides fast, reliable, and maintainable tests
 for the most critical flows in your app. This plugin provides a `waldo_upload`
-action which allows you to upload an iOS app binary to the Waldo backend for
-processing.
+action which allows you to upload an iOS build to Waldo for processing.
 
 ## Usage
 
-To get started, first obtain an application identifier and an API key in Waldo.
-These are used to authenticate with the Waldo API in each call.
+To get started, first obtain an application ID and an API key from Waldo for
+your app. These are used to authenticate with the Waldo backend on each call.
+
+Next, build a new IPA for your app. If you use `gym` (aka `build_ios_app`) to
+build your IPA, `waldo_upload` will automatically find and upload the generated
+IPA.
 
 ```ruby
-waldo_upload(
-  app_path: '/Users/jgp/Desktop/XestiMonitorsDemo.ipa',
-  application_id: 'app-b6ef42d5f619357b',
-  api_key: '9191623f3d80780c391be39085ed2652',
-  package_name: 'com.xesticode.XestiMonitorsDemo-iOS',
-  variant_name: 'ad-hoc'
-)
+gym
+waldo_upload
 ```
 
-## Example
+When called without parameters, `waldo_upload` uses the default Waldo
+configuration path (`./.waldo.yml`) to obtain the application ID and API key
+for authentication. You can also specify the Waldo configuration path
+explicitly:
 
-Check out the [example `Fastfile`](fastlane/Fastfile) to see how to use this plugin. Try it by cloning the repo, running `fastlane install_plugins` and `bundle exec fastlane test`.
-
-**Note to author:** Please set up a sample project to make it easy for users to explore what your plugin does. Provide everything that is necessary to try out the plugin in this project (including a sample Xcode/Android project if necessary)
-
-## Run tests for this plugin
-
-To run both the tests, and code style validation, run
-
-```
-rake
+```ruby
+gym
+waldo_upload(configuration_path: "/path/to/YourWaldoConfig.yml")
 ```
 
-To automatically fix many of the styling issues, use
+You can even specify the application ID and API key directly on `waldo_upload`:
+
+```ruby
+gym
+waldo_upload(api_key: "0123456789abcdef0123456789abcdef",
+             application_id: "app-0123456789abcdef")
 ```
-rubocop -a
+
+This is typically _not_ recommended for reasons of security.
+
+Finally, if you do _not_ use `gym` to build your IPA, you will need to
+explicitly specify the IPA path to `waldo_upload`:
+
+```ruby
+waldo_upload(ipa_path: "/path/to/YourApp.ipa")
 ```
 
 ## Issues and Feedback
 
-For any other issues and feedback about this plugin, please submit it to this repository.
+For any other issues and feedback about this plugin, please submit it to this
+repository.
 
 ## Troubleshooting
 
-If you have trouble using plugins, check out the [Plugins Troubleshooting](https://docs.fastlane.tools/plugins/plugins-troubleshooting/) guide.
+If you have trouble using plugins, check out the [Plugins
+Troubleshooting](https://docs.fastlane.tools/plugins/plugins-troubleshooting/)
+guide.
 
 ## Using _fastlane_ Plugins
 
-For more information about how the `fastlane` plugin system works, check out the [Plugins documentation](https://docs.fastlane.tools/plugins/create-plugin/).
+For more information about how the `fastlane` plugin system works, check out
+the [Plugins documentation](https://docs.fastlane.tools/plugins/create-plugin/).
 
 ## About _fastlane_
 
-_fastlane_ is the easiest way to automate beta deployments and releases for your iOS and Android apps. To learn more, check out [fastlane.tools](https://fastlane.tools).
+_fastlane_ is the easiest way to automate beta deployments and releases for
+your iOS and Android apps. To learn more, check out
+[fastlane.tools](https://fastlane.tools).
