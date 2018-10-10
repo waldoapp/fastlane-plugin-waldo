@@ -14,48 +14,33 @@ fastlane add_plugin waldo
 ## About Waldo
 
 [Waldo](https://www.waldo.io) provides fast, reliable, and maintainable tests
-for the most critical flows in your app. This plugin provides a `waldo_upload`
-action which allows you to upload an iOS build to Waldo for processing.
+for the most critical flows in your app. This plugin provides a `waldo` action
+which allows you to upload an iOS build to Waldo for processing.
 
 ## Usage
 
-To get started, first obtain an application ID and an API key from Waldo for
+To get started, first obtain an API key and an application ID from Waldo for
 your app. These are used to authenticate with the Waldo backend on each call.
 
 Next, build a new IPA for your app. If you use `gym` (aka `build_ios_app`) to
-build your IPA, `waldo_upload` will automatically find and upload the generated
+build your IPA, `waldo` will automatically find and upload the generated
 IPA.
 
 ```ruby
 gym
-waldo_upload
+waldo(api_key: "0123456789abcdef0123456789abcdef",
+      application_id: "app-0123456789abcdef")
 ```
 
-When called without parameters, `waldo_upload` uses the default Waldo
-configuration path (`./.waldo.yml`) to obtain the application ID and API key
-for authentication. You can also specify the Waldo configuration path
-explicitly:
+> **Note:** You _must_ specify the Waldo API key and application ID key.
+
+If for some reason you do _not_ use `gym` to build your IPA, you will need to
+explicitly specify the IPA path to `waldo`:
 
 ```ruby
-gym
-waldo_upload(configuration_path: "/path/to/YourWaldoConfig.yml")
-```
-
-You can even specify the application ID and API key directly on `waldo_upload`:
-
-```ruby
-gym
-waldo_upload(api_key: "0123456789abcdef0123456789abcdef",
-             application_id: "app-0123456789abcdef")
-```
-
-This is typically _not_ recommended for reasons of security.
-
-Finally, if you do _not_ use `gym` to build your IPA, you will need to
-explicitly specify the IPA path to `waldo_upload`:
-
-```ruby
-waldo_upload(ipa_path: "/path/to/YourApp.ipa")
+waldo(ipa_path: "/path/to/YourApp.ipa",
+      api_key: "0123456789abcdef0123456789abcdef",
+      application_id: "app-0123456789abcdef")
 ```
 
 ## Issues and Feedback

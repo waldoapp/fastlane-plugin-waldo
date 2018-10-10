@@ -1,27 +1,58 @@
-require 'fastlane_core/command_executor'
+require 'json'
+require 'net/http'
 
 module Fastlane
   module Helper
     class WaldoHelper
-      def self.find_waldo_command()
-        path = FastlaneCore::CommandExecutor.which('waldo')
+      def self.parse_response(response)
+        dump_response(response) if FastlaneCore::Globals.verbose?
 
-        unless path
-          UI.user_error!("Waldo not installed, download from https://github.com/waldoapp/waldo-cli/releases")
+        if response.code == '401'
+          UI.user_error!("API key is invalid or missing!")
+
+          return false
+        else
+          return response.code == '200'
         end
-
-        return path
       end
 
-      def self.generate_waldo_command(cmd, params)
-        command = []
-        command << find_waldo_command()
-        command << "#{cmd} '#{params[:ipa_path]}'"
-        command << "--application '#{params[:application_id]}'" if params[:application_id]
-        command << "--configuration '#{params[:configuration_path]}'" if params[:configuration_path]
-        command << "--key '#{params[:api_key]}'" if params[:api_key]
+      def self.upload_build(params)
+        uri = URI('https://api.waldo.io/versions')
+        http = Net::HTTP.new(uri.host, uri.port)
 
-        return command.join(' ')
+        http.use_ssl = true
+
+        request = Net::HTTP::Post.new(uri.request_uri)
+
+        request['Authorization'] = "Upload-Token #{params[:api_key]}"
+        request['User-Agent'] = "Waldo FastlaneIOS v#{Fastlane::Waldo::VERSION}"
+
+        request.body = File.read(params[:ipa_path])
+        request.content_type = 'application/octet-stream'
+
+        dump_request(request) if FastlaneCore::Globals.verbose?
+
+        http.request(request)
+      end
+
+      def self.dump_request(request)
+        puts "Request: #{request.method} #{request.path} (#{request.body.length} bytes)"
+
+        request.each_capitalized do |key, value|
+          puts "  #{key}: #{value}"
+        end
+
+        puts "-------"
+      end
+
+      def self.dump_response(response)
+        puts "Response: #{response.code} #{response.message} (#{response.body.length} bytes)"
+
+        response.each_capitalized do |key, value|
+          puts "  #{key}: #{value}"
+        end
+
+        puts "#{response.body}"
       end
     end
   end

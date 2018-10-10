@@ -1,34 +1,21 @@
-require_relative '../helper/waldo_helper'
-
 module Fastlane
   module Actions
-    class WaldoUploadAction < Action
+    class WaldoAction < Action
       def self.run(params)
         params.values   # validate all inputs before looking for the IPA
 
-        FastlaneCore::PrintTable.print_values(config: params,
-                                              title: "Summary for waldo_upload #{Fastlane::Waldo::VERSION}")
+        UI.user_error!("You must pass an IPA file to the Waldo action") unless params[:ipa_path]
 
-        if params[:ipa_path]
-          command = Helper::WaldoHelper.generate_waldo_command('upload', params)
-        else
-          UI.user_error!("You must pass an IPA file to the Waldo upload action")
-        end
+        FastlaneCore::PrintTable.print_values(config: params,
+                                              title: "Summary for waldo #{Fastlane::Waldo::VERSION}")
 
         UI.success('Uploading the build to Waldo. This could take a while…')
 
-        UI.verbose(command)
+        response = Helper::WaldoHelper.upload_build(params)
 
-        result = Actions.sh_control_output(command,
-                                           print_command: false,
-                                           print_command_output: false,
-                                           error_callback: proc do |error|
-                                             UI.user_error!(error)
-                                           end)
-
-        UI.verbose(result)
-
-        UI.success('Build successfully uploaded to Waldo!')
+        if Helper::WaldoHelper.parse_response(response)
+          UI.success('Build successfully uploaded to Waldo!')
+        end
       end
 
       def self.authors
@@ -69,13 +56,6 @@ module Fastlane
                                        sensitive: true,
                                        verify_block: proc do |value|
                                          UI.user_error!("No application ID for Waldo given, pass using `application_id: 'id'`") unless value && !value.empty?
-                                       end),
-          FastlaneCore::ConfigItem.new(key: :configuration_path,
-                                       env_name: "WALDO_CONFIGURATION_PATH",
-                                       description: "Path to your Waldo configuration file. Defaults to `./.waldo.yml`",
-                                       optional: true,
-                                       verify_block: proc do |value|
-                                         UI.user_error!("Path '#{value}' not found") unless File.exist?(value)
                                        end)
         ]
       end
@@ -90,12 +70,8 @@ module Fastlane
 
       def self.example_code
         [
-          'waldo_upload',
-          'waldo_upload(
-            ipa_path: "./MyApp.ipa",
-            configuration_path: "./Waldo.yml"
-          )',
-          'waldo_upload(
+          'waldo',
+          'waldo(
             ipa_path: "./MyApp.ipa",
             api_key: "...",
             application_id: "..."
