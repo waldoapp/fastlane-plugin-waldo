@@ -16,12 +16,11 @@ module Fastlane
           Net::HTTP.start(uri.host, uri.port, :use_ssl => true) do |http|
             http.read_timeout = 120   # 2 minutes
 
-            http.request(request)
+            parse_response(http.request(request))
           end
         rescue Net::ReadTimeout
           UI.user_error!("Upload to Waldo timed out!")
         rescue => exc
-          # print exc.backtrace.join("\n")
           UI.user_error!("Something went wrong uploading to Waldo: #{exc.inspect}")
         ensure
           request.body_stream.close if request && request.body_stream
@@ -42,7 +41,9 @@ module Fastlane
       end
 
       def self.dump_request(request)
-        puts "Request: #{request.method} #{request.path} (#{request.body.length} bytes)"
+        len = request.body ? request.body.length : 0
+
+        puts "Request: #{request.method} #{request.path} (#{len} bytes)"
 
         request.each_capitalized do |key, value|
           puts "  #{key}: #{value}"
