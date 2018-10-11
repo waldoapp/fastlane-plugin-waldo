@@ -22,7 +22,8 @@ which allows you to upload an iOS build to Waldo for processing.
 To get started, first obtain an API key and an application ID from Waldo for
 your app. These are used to authenticate with the Waldo backend on each call.
 
-These are the same credentials that you added in your `waldo.yml` configuration file during the onboarding.
+These are the same credentials that you added in your `.waldo.yml`
+configuration file during on-boarding.
 
 Next, build a new IPA for your app. If you use `gym` (aka `build_ios_app`) to
 build your IPA, `waldo` will automatically find and upload the generated

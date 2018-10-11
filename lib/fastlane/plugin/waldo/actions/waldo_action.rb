@@ -2,20 +2,21 @@ module Fastlane
   module Actions
     class WaldoAction < Action
       def self.run(params)
-        params.values   # validate all inputs before looking for the IPA
+        params.values   # validate all inputs
 
-        UI.user_error!("You must pass an IPA file to the Waldo action") unless params[:ipa_path]
+        platform = Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
+
+        if platform == :ios || platform.nil?
+          UI.user_error!("You must pass an IPA path to the Waldo action") unless params[:ipa_path]
+        end
+
+        UI.user_error!("You must pass an API key to the Waldo action") unless params[:api_key]
+        UI.user_error!("You must pass an application ID to the Waldo action") unless params[:application_id]
 
         FastlaneCore::PrintTable.print_values(config: params,
                                               title: "Summary for waldo #{Fastlane::Waldo::VERSION}")
 
-        UI.success('Uploading the build to Waldo. This could take a while…')
-
-        response = Helper::WaldoHelper.upload_build(params)
-
-        if Helper::WaldoHelper.parse_response(response)
-          UI.success('Build successfully uploaded to Waldo!')
-        end
+        Helper::WaldoHelper.upload_build(params)
       end
 
       def self.authors
@@ -71,6 +72,10 @@ module Fastlane
       def self.example_code
         [
           'waldo',
+          'waldo(
+            api_key: "...",
+            application_id: "..."
+          )',
           'waldo(
             ipa_path: "./MyApp.ipa",
             api_key: "...",

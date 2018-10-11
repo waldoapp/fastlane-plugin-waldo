@@ -1,38 +1,44 @@
-require 'json'
 require 'net/http'
 
 module Fastlane
   module Helper
     class WaldoHelper
-      def self.parse_response(response)
-        dump_response(response) if FastlaneCore::Globals.verbose?
+      def self.upload_build(params)
+        UI.success('Uploading the build to Waldo. This could take a while…')
 
-        if response.code == '401'
-          UI.user_error!("API key is invalid or missing!")
+        begin
+          uri = URI('https://api.waldo.io/versions')
 
-          return false
-        else
-          return response.code == '200'
+          request = build_request(uri, params)
+
+          dump_request(request) if FastlaneCore::Globals.verbose?
+
+          Net::HTTP.start(uri.host, uri.port, :use_ssl => true) do |http|
+            http.read_timeout = 120   # 2 minutes
+
+            http.request(request)
+          end
+        rescue Net::ReadTimeout
+          UI.user_error!("Upload to Waldo timed out!")
+        rescue => exc
+          # print exc.backtrace.join("\n")
+          UI.user_error!("Something went wrong uploading to Waldo: #{exc.inspect}")
+        ensure
+          request.body_stream.close if request && request.body_stream
         end
       end
 
-      def self.upload_build(params)
-        uri = URI('https://api.waldo.io/versions')
-        http = Net::HTTP.new(uri.host, uri.port)
+      def self.build_request(uri, params)
+          request = Net::HTTP::Post.new(uri.request_uri)
 
-        http.use_ssl = true
+          request['Authorization'] = "Upload-Token #{params[:api_key]}"
+          request['Transfer-Encoding'] = 'chunked'
+          request['User-Agent'] = "Waldo FastlaneIOS v#{Fastlane::Waldo::VERSION}"
 
-        request = Net::HTTP::Post.new(uri.request_uri)
+          request.body_stream = WaldoReadIO.new(params[:ipa_path])
+          request.content_type = 'application/octet-stream'
 
-        request['Authorization'] = "Upload-Token #{params[:api_key]}"
-        request['User-Agent'] = "Waldo FastlaneIOS v#{Fastlane::Waldo::VERSION}"
-
-        request.body = File.read(params[:ipa_path])
-        request.content_type = 'application/octet-stream'
-
-        dump_request(request) if FastlaneCore::Globals.verbose?
-
-        http.request(request)
+          request
       end
 
       def self.dump_request(request)
@@ -53,6 +59,37 @@ module Fastlane
         end
 
         puts "#{response.body}"
+      end
+
+      def self.parse_response(response)
+        dump_response(response) if FastlaneCore::Globals.verbose?
+
+        case response.code.to_i
+        when 200..299
+          UI.success('Build successfully uploaded to Waldo!')
+        when 401
+          UI.user_error!("API key is invalid or missing!")
+        else
+          UI.user_error!("Build failed to upload to Waldo: #{response.code} #{response.message}")
+        end
+      end
+    end
+
+    class WaldoReadIO
+      def initialize(path)
+        @fp = File.open(path)
+      end
+
+      def close
+        @fp.close
+      end
+
+      def read(length = nil, outbuf = nil)
+        if result = @fp.read(length, outbuf)
+          result.force_encoding('BINARY') if result.respond_to?(:force_encoding)
+        end
+
+        result
       end
     end
   end
