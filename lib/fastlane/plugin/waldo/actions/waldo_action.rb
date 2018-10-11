@@ -43,7 +43,7 @@ module Fastlane
           # General
           FastlaneCore::ConfigItem.new(key: :api_key,
                                        env_name: "WALDO_API_KEY",
-                                       description: "Waldo API key. Overrides value in Waldo configuration file",
+                                       description: "Waldo API key",
                                        optional: true,
                                        sensitive: true,
                                        verify_block: proc do |value|
@@ -51,7 +51,7 @@ module Fastlane
                                        end),
           FastlaneCore::ConfigItem.new(key: :application_id,
                                        env_name: "WALDO_APPLICATION_ID",
-                                       description: "Waldo application ID. Overrides value in Waldo configuration file",
+                                       description: "Waldo application ID",
                                        optional: true,
                                        sensitive: true,
                                        verify_block: proc do |value|
