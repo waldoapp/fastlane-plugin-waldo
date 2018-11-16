@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.author        = %q{J. G. Pusey}
   spec.email         = %q{john@waldo.io}
 
-  spec.summary       = %q{Upload IPA to Waldo}
+  spec.summary       = %q{Upload build to Waldo}
   spec.homepage      = "https://github.com/waldoapp/fastlane-plugin-waldo"
   spec.license       = "MIT"
 

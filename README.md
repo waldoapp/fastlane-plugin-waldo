@@ -15,24 +15,22 @@ fastlane add_plugin waldo
 
 [Waldo](https://www.waldo.io) provides fast, reliable, and maintainable tests
 for the most critical flows in your app. This plugin provides a `waldo` action
-which allows you to upload an iOS build to Waldo for processing.
+which allows you to upload an iOS or Android build to Waldo for processing.
 
 ## Usage
 
 To get started, first obtain an API key and an application ID from Waldo for
 your app. These are used to authenticate with the Waldo backend on each call.
 
-These are the same credentials that you added in your `.waldo.yml`
-configuration file during on-boarding.
+### Uploading an iOS Build
 
-Next, build a new IPA for your app. If you use `gym` (aka `build_ios_app`) to
-build your IPA, `waldo` will automatically find and upload the generated
-IPA.
+Build a new IPA for your app. If you use `gym` (aka `build_ios_app`) to build
+your IPA, `waldo` will automatically find and upload the generated IPA.
 
 ```ruby
 gym
-waldo(api_key: "0123456789abcdef0123456789abcdef",
-      application_id: "app-0123456789abcdef")
+waldo(api_key: '0123456789abcdef0123456789abcdef',
+      application_id: 'app-0123456789abcdef')
 ```
 
 > **Note:** You _must_ specify the Waldo API key and application ID key.
@@ -41,9 +39,32 @@ If for some reason you do _not_ use `gym` to build your IPA, you will need to
 explicitly specify the IPA path to `waldo`:
 
 ```ruby
-waldo(ipa_path: "/path/to/YourApp.ipa",
-      api_key: "0123456789abcdef0123456789abcdef",
-      application_id: "app-0123456789abcdef")
+waldo(ipa_path: '/path/to/YourApp.ipa',
+      api_key: '0123456789abcdef0123456789abcdef',
+      application_id: 'app-0123456789abcdef')
+```
+
+### Uploading an Android Build
+
+Build a new APK for your app. If you use `gradle` to build your APK, `waldo`
+will automatically find and upload the generated APK.
+
+```ruby
+gradle(task: 'assemble',
+       build_type: 'Release')
+waldo(api_key: '0123456789abcdef0123456789abcdef',
+      application_id: 'app-0123456789abcdef')
+```
+
+> **Note:** You _must_ specify the Waldo API key and application ID key.
+
+If for some reason you do _not_ use `gradle` to build your APK, you will need
+to explicitly specify the APK path to `waldo`:
+
+```ruby
+waldo(apk_path: '/path/to/YourApp.apk',
+      api_key: '0123456789abcdef0123456789abcdef',
+      application_id: 'app-0123456789abcdef')
 ```
 
 ## Issues and Feedback

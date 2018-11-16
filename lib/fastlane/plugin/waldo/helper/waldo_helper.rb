@@ -28,16 +28,26 @@ module Fastlane
       end
 
       def self.build_request(uri, params)
-          request = Net::HTTP::Post.new(uri.request_uri)
+        platform = Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
 
-          request['Authorization'] = "Upload-Token #{params[:api_key]}"
-          request['Transfer-Encoding'] = 'chunked'
-          request['User-Agent'] = "Waldo FastlaneIOS v#{Fastlane::Waldo::VERSION}"
+        if platform == :android
+          body_path = params[:apk_path]
+          flavor = "Android"
+        elsif platform == :ios || platform.nil?
+          body_path = params[:ipa_path]
+          flavor = "iOS"
+        end
 
-          request.body_stream = WaldoReadIO.new(params[:ipa_path])
-          request.content_type = 'application/octet-stream'
+        request = Net::HTTP::Post.new(uri.request_uri)
 
-          request
+        request['Authorization'] = "Upload-Token #{params[:api_key]}"
+        request['Transfer-Encoding'] = 'chunked'
+        request['User-Agent'] = "Waldo fastlane/#{flavor} v#{Fastlane::Waldo::VERSION}"
+
+        request.body_stream = WaldoReadIO.new(body_path)
+        request.content_type = 'application/octet-stream'
+
+        request
       end
 
       def self.dump_request(request)
