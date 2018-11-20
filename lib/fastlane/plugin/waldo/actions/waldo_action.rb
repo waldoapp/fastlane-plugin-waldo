@@ -16,7 +16,7 @@ module Fastlane
         UI.user_error!("You must pass an application ID to the Waldo action") unless params[:application_id]
 
         FastlaneCore::PrintTable.print_values(config: params,
-                                              title: "Summary for waldo #{Fastlane::Waldo::VERSION}")
+                                              title: "Summary for waldo #{Fastlane::Waldo::VERSION.to_s}")
 
         Helper::WaldoHelper.upload_build(params)
       end
@@ -39,21 +39,21 @@ module Fastlane
           FastlaneCore::ConfigItem.new(key: :ipa_path,
                                        env_name: "WALDO_IPA_PATH",
                                        description: "Path to your IPA file. Optional if you use the _gym_ or _xcodebuild_ action",
-                                       default_value: Actions.lane_context[SharedValues::IPA_OUTPUT_PATH] || ipa_path_default,
+                                       default_value: Actions.lane_context[Actions::SharedValues::IPA_OUTPUT_PATH] || ipa_path_default,
                                        default_value_dynamic: true,
                                        optional: true,
                                        verify_block: proc do |value|
-                                         UI.user_error!("Unable to find IPA file at path '#{value}'") unless File.exist?(value)
+                                         UI.user_error!("Unable to find IPA file at path '#{value.to_s}'") unless File.exist?(value)
                                        end),
           # Android-specific
           FastlaneCore::ConfigItem.new(key: :apk_path,
                                        env_name: "WALDO_APK_PATH",
                                        description: "Path to your APK file. Optional if you use the _gradle_ action",
-                                       default_value: Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH] || apk_path_default,
+                                       default_value: Actions.lane_context[Actions::SharedValues::GRADLE_APK_OUTPUT_PATH] || apk_path_default,
                                        default_value_dynamic: true,
                                        optional: true,
                                        verify_block: proc do |value|
-                                         UI.user_error!("Unable to find APK file at path '#{value}'") unless File.exist?(value)
+                                         UI.user_error!("Unable to find APK file at path '#{value.to_s}'") unless File.exist?(value)
                                        end),
           # General
           FastlaneCore::ConfigItem.new(key: :api_key,

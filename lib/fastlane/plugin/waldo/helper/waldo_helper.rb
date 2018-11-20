@@ -7,7 +7,12 @@ module Fastlane
         UI.success('Uploading the build to Waldo. This could take a while…')
 
         begin
-          uri = URI('https://api.waldo.io/versions')
+          variant_name = Actions.lane_context[Actions::SharedValues::GRADLE_BUILD_TYPE]
+          uri_string = 'https://api.waldo.io/versions'
+
+          uri_string += "?variantName=#{variant_name}" if variant_name
+
+          uri = URI(uri_string)
 
           request = build_request(uri, params)
 
@@ -21,7 +26,7 @@ module Fastlane
         rescue Net::ReadTimeout
           UI.user_error!("Upload to Waldo timed out!")
         rescue => exc
-          UI.user_error!("Something went wrong uploading to Waldo: #{exc.inspect}")
+          UI.user_error!("Something went wrong uploading to Waldo: #{exc.inspect.to_s}")
         ensure
           request.body_stream.close if request && request.body_stream
         end
