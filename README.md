@@ -33,7 +33,7 @@ waldo(api_key: '0123456789abcdef0123456789abcdef',
       application_id: 'app-0123456789abcdef')
 ```
 
-> **Note:** You _must_ specify the Waldo API key and application ID key.
+> **Note:** You _must_ specify the Waldo API key and application ID.
 
 If for some reason you do _not_ use `gym` to build your IPA, you will need to
 explicitly specify the IPA path to `waldo`:
@@ -56,7 +56,7 @@ waldo(api_key: '0123456789abcdef0123456789abcdef',
       application_id: 'app-0123456789abcdef')
 ```
 
-> **Note:** You _must_ specify the Waldo API key and application ID key.
+> **Note:** You _must_ specify the Waldo API key and application ID.
 
 If for some reason you do _not_ use `gradle` to build your APK, you will need
 to explicitly specify the APK path to `waldo`:
