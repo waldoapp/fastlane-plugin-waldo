@@ -19,8 +19,8 @@ which allows you to upload an iOS or Android build to Waldo for processing.
 
 ## Usage
 
-To get started, first obtain an API key and an application ID from Waldo for
-your app. These are used to authenticate with the Waldo backend on each call.
+To get started, first obtain an upload token from Waldo for your app. These are
+used to authenticate with the Waldo backend on each call.
 
 ### Uploading an iOS Build
 
@@ -29,19 +29,17 @@ your IPA, `waldo` will automatically find and upload the generated IPA.
 
 ```ruby
 gym
-waldo(api_key: '0123456789abcdef0123456789abcdef',
-      application_id: 'app-0123456789abcdef')
+waldo(upload_token: '0123456789abcdef0123456789abcdef')
 ```
 
-> **Note:** You _must_ specify the Waldo API key and application ID.
+> **Note:** You _must_ specify the Waldo upload token.
 
 If for some reason you do _not_ use `gym` to build your IPA, you will need to
 explicitly specify the IPA path to `waldo`:
 
 ```ruby
 waldo(ipa_path: '/path/to/YourApp.ipa',
-      api_key: '0123456789abcdef0123456789abcdef',
-      application_id: 'app-0123456789abcdef')
+      upload_token: '0123456789abcdef0123456789abcdef')
 ```
 
 ### Uploading an Android Build
@@ -52,19 +50,17 @@ will automatically find and upload the generated APK.
 ```ruby
 gradle(task: 'assemble',
        build_type: 'Release')
-waldo(api_key: '0123456789abcdef0123456789abcdef',
-      application_id: 'app-0123456789abcdef')
+waldo(upload_token: '0123456789abcdef0123456789abcdef')
 ```
 
-> **Note:** You _must_ specify the Waldo API key and application ID.
+> **Note:** You _must_ specify the Waldo upload token.
 
 If for some reason you do _not_ use `gradle` to build your APK, you will need
 to explicitly specify the APK path to `waldo`:
 
 ```ruby
 waldo(apk_path: '/path/to/YourApp.apk',
-      api_key: '0123456789abcdef0123456789abcdef',
-      application_id: 'app-0123456789abcdef')
+      upload_token: '0123456789abcdef0123456789abcdef')
 ```
 
 ## Issues and Feedback

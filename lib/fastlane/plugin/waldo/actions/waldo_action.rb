@@ -12,8 +12,7 @@ module Fastlane
           UI.user_error!("You must pass an IPA path to the Waldo action") unless params[:ipa_path]
         end
 
-        UI.user_error!("You must pass an API key to the Waldo action") unless params[:api_key]
-        UI.user_error!("You must pass an application ID to the Waldo action") unless params[:application_id]
+        UI.user_error!("You must pass an upload token to the Waldo action") unless params[:upload_token]
 
         FastlaneCore::PrintTable.print_values(config: params,
                                               title: "Summary for waldo #{Fastlane::Waldo::VERSION.to_s}")
@@ -56,21 +55,21 @@ module Fastlane
                                          UI.user_error!("Unable to find APK file at path '#{value.to_s}'") unless File.exist?(value)
                                        end),
           # General
-          FastlaneCore::ConfigItem.new(key: :api_key,
-                                       env_name: "WALDO_API_KEY",
-                                       description: "Waldo API key",
+          FastlaneCore::ConfigItem.new(key: :upload_token,
+                                       env_name: "WALDO_UPLOAD_TOKEN",
+                                       description: "Waldo upload token",
                                        optional: true,
                                        sensitive: true,
                                        verify_block: proc do |value|
-                                         UI.user_error!("No API key for Waldo given, pass using `api_key: 'key'`") unless value && !value.empty?
+                                         UI.user_error!("No upload token for Waldo given, pass using `upload_token: 'value'`") unless value && !value.empty?
                                        end),
-          FastlaneCore::ConfigItem.new(key: :application_id,
-                                       env_name: "WALDO_APPLICATION_ID",
-                                       description: "Waldo application ID",
+          FastlaneCore::ConfigItem.new(key: :variant_name,
+                                       env_name: "WALDO_VARIANT_NAME",
+                                       description: "Waldo variant name",
                                        optional: true,
                                        sensitive: true,
                                        verify_block: proc do |value|
-                                         UI.user_error!("No application ID for Waldo given, pass using `application_id: 'id'`") unless value && !value.empty?
+                                         UI.user_error!("No variant name for Waldo given, pass using `variant_name: 'value'`") unless value && !value.empty?
                                        end)
         ]
       end
@@ -87,18 +86,15 @@ module Fastlane
         [
           'waldo',
           'waldo(
-            api_key: "...",
-            application_id: "..."
+            upload_token: "..."
           )',
           'waldo(
-            apk_path: "./MyApp.apk",
-            api_key: "...",
-            application_id: "..."
+            apk_path: "./YourApp.apk",
+            upload_token: "..."
           )',
           'waldo(
-            ipa_path: "./MyApp.ipa",
-            api_key: "...",
-            application_id: "..."
+            ipa_path: "./YourApp.ipa",
+            upload_token: "..."
           )'
         ]
       end

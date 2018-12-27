@@ -7,7 +7,7 @@ module Fastlane
         UI.success('Uploading the build to Waldo. This could take a while…')
 
         begin
-          variant_name = Actions.lane_context[Actions::SharedValues::GRADLE_BUILD_TYPE]
+          variant_name = params[:variant_name] || Actions.lane_context[Actions::SharedValues::GRADLE_BUILD_TYPE]
           uri_string = 'https://api.waldo.io/versions'
 
           uri_string += "?variantName=#{variant_name}" if variant_name
@@ -45,7 +45,7 @@ module Fastlane
 
         request = Net::HTTP::Post.new(uri.request_uri)
 
-        request['Authorization'] = "Upload-Token #{params[:api_key]}"
+        request['Authorization'] = "Upload-Token #{params[:upload_token]}"
         request['Transfer-Encoding'] = 'chunked'
         request['User-Agent'] = "Waldo fastlane/#{flavor} v#{Fastlane::Waldo::VERSION}"
 
@@ -84,7 +84,7 @@ module Fastlane
         when 200..299
           UI.success('Build successfully uploaded to Waldo!')
         when 401
-          UI.user_error!("API key is invalid or missing!")
+          UI.user_error!("Upload token is invalid or missing!")
         else
           UI.user_error!("Build failed to upload to Waldo: #{response.code} #{response.message}")
         end
