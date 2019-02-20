@@ -7,12 +7,12 @@ module Fastlane
         platform = Actions.lane_context[Actions::SharedValues::PLATFORM_NAME]
 
         if platform == :android
-          UI.user_error!("You must pass an APK path to the Waldo action") unless params[:apk_path]
+          UI.error("You must pass an APK path to the Waldo action") and return unless params[:apk_path]
         elsif platform == :ios || platform.nil?
-          UI.user_error!("You must pass an IPA path to the Waldo action") unless params[:ipa_path]
+          UI.error("You must pass an IPA path to the Waldo action") and return unless params[:ipa_path]
         end
 
-        UI.user_error!("You must pass an upload token to the Waldo action") unless params[:upload_token]
+        UI.error("You must pass an upload token to the Waldo action") and return unless params[:upload_token]
 
         FastlaneCore::PrintTable.print_values(config: params,
                                               title: "Summary for waldo #{Fastlane::Waldo::VERSION.to_s}")
@@ -42,7 +42,7 @@ module Fastlane
                                        default_value_dynamic: true,
                                        optional: true,
                                        verify_block: proc do |value|
-                                         UI.user_error!("Unable to find IPA file at path '#{value.to_s}'") unless File.exist?(value)
+                                         UI.error("Unable to find IPA file at path '#{value.to_s}'") unless File.exist?(value)
                                        end),
           # Android-specific
           FastlaneCore::ConfigItem.new(key: :apk_path,
@@ -52,7 +52,7 @@ module Fastlane
                                        default_value_dynamic: true,
                                        optional: true,
                                        verify_block: proc do |value|
-                                         UI.user_error!("Unable to find APK file at path '#{value.to_s}'") unless File.exist?(value)
+                                         UI.error("Unable to find APK file at path '#{value.to_s}'") unless File.exist?(value)
                                        end),
           # General
           FastlaneCore::ConfigItem.new(key: :upload_token,
@@ -61,7 +61,7 @@ module Fastlane
                                        optional: true,
                                        sensitive: true,
                                        verify_block: proc do |value|
-                                         UI.user_error!("No upload token for Waldo given, pass using `upload_token: 'value'`") unless value && !value.empty?
+                                         UI.error("No upload token for Waldo given, pass using `upload_token: 'value'`") unless value && !value.empty?
                                        end),
           FastlaneCore::ConfigItem.new(key: :variant_name,
                                        env_name: "WALDO_VARIANT_NAME",
@@ -69,7 +69,7 @@ module Fastlane
                                        optional: true,
                                        sensitive: true,
                                        verify_block: proc do |value|
-                                         UI.user_error!("No variant name for Waldo given, pass using `variant_name: 'value'`") unless value && !value.empty?
+                                         UI.error("No variant name for Waldo given, pass using `variant_name: 'value'`") unless value && !value.empty?
                                        end)
         ]
       end

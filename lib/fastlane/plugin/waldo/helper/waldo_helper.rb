@@ -24,9 +24,9 @@ module Fastlane
             parse_response(http.request(request))
           end
         rescue Net::ReadTimeout
-          UI.user_error!("Upload to Waldo timed out!")
+          UI.error("Upload to Waldo timed out!")
         rescue => exc
-          UI.user_error!("Something went wrong uploading to Waldo: #{exc.inspect.to_s}")
+          UI.error("Something went wrong uploading to Waldo: #{exc.inspect.to_s}")
         ensure
           request.body_stream.close if request && request.body_stream
         end
@@ -84,9 +84,9 @@ module Fastlane
         when 200..299
           UI.success('Build successfully uploaded to Waldo!')
         when 401
-          UI.user_error!("Upload token is invalid or missing!")
+          UI.error("Upload token is invalid or missing!")
         else
-          UI.user_error!("Build failed to upload to Waldo: #{response.code} #{response.message}")
+          UI.error("Build failed to upload to Waldo: #{response.code} #{response.message}")
         end
       end
     end
