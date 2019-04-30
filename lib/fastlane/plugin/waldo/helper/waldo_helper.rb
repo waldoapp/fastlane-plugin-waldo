@@ -39,7 +39,15 @@ module Fastlane
           body_path = params[:apk_path]
           flavor = "Android"
         elsif platform == :ios || platform.nil?
-          body_path = params[:ipa_path]
+          if params[:app_path]
+            app_dir_path = File.dirname(params[:app_path])
+            app_name = File.basename(params[:app_path])
+            body_path = File.join(Dir.tmpdir, "#{app_name}.zip")
+
+            Actions.sh(%(cd "#{app_dir_path}" && zip -qry "#{body_path}" "#{app_name}"))
+          else
+            body_path = params[:ipa_path]
+          end
           flavor = "iOS"
         end
 
@@ -50,7 +58,12 @@ module Fastlane
         request['User-Agent'] = "Waldo fastlane/#{flavor} v#{Fastlane::Waldo::VERSION}"
 
         request.body_stream = WaldoReadIO.new(body_path)
-        request.content_type = 'application/octet-stream'
+
+        if params[:app_path]
+          request.content_type = 'application/zip'
+        else
+          request.content_type = 'application/octet-stream'
+        end
 
         request
       end

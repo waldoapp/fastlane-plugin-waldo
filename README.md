@@ -22,25 +22,55 @@ which allows you to upload an iOS or Android build to Waldo for processing.
 To get started, first obtain an upload token from Waldo for your app. These are
 used to authenticate with the Waldo backend on each call.
 
-### Uploading an iOS Build
+### Uploading an iOS Device Build
 
 Build a new IPA for your app. If you use `gym` (aka `build_ios_app`) to build
 your IPA, `waldo` will automatically find and upload the generated IPA.
 
 ```ruby
-gym
+gym(export_method: 'development')                       # or 'ad-hoc'
 waldo(upload_token: '0123456789abcdef0123456789abcdef')
 ```
 
 > **Note:** You _must_ specify the Waldo upload token.
 
-If for some reason you do _not_ use `gym` to build your IPA, you will need to
-explicitly specify the IPA path to `waldo`:
+If you do _not_ use `gym` to build your IPA, you will need to explicitly
+specify the IPA path to `waldo`:
 
 ```ruby
 waldo(ipa_path: '/path/to/YourApp.ipa',
       upload_token: '0123456789abcdef0123456789abcdef')
 ```
+
+### Uploading an iOS Simulator Build
+
+Create a new simulator build for your app.
+
+You can use `gym` (aka `build_ios_app`) to build your app provided that you
+supply several parameters in order to convince Xcode to _both_ build for the
+simulator _and_ not attempt to generate an IPA:
+
+```ruby
+gym(configuration: 'Release',
+    derived_data_path: '/path/to/derivedData',
+    skip_package_ipa: true,
+    skip_archive: true,
+    destination: 'generic/platform=iOS Simulator')
+```
+
+You can then find your app relative to the derived data path in the
+`./Build/Products/Release-iphonesimulator` directory.
+
+Regardless of how you create the actual simulator build for your app, the
+upload itself is very simple:
+
+```ruby
+waldo(app_path: '/path/to/YourApp.app',
+      upload_token: '0123456789abcdef0123456789abcdef')
+```
+
+> **Note:** You _must_ specify _both_ the path of the `.app` _and_ the Waldo
+> upload token.
 
 ### Uploading an Android Build
 
@@ -55,8 +85,8 @@ waldo(upload_token: '0123456789abcdef0123456789abcdef')
 
 > **Note:** You _must_ specify the Waldo upload token.
 
-If for some reason you do _not_ use `gradle` to build your APK, you will need
-to explicitly specify the APK path to `waldo`:
+If you do _not_ use `gradle` to build your APK, you will need to explicitly
+specify the APK path to `waldo`:
 
 ```ruby
 waldo(apk_path: '/path/to/YourApp.apk',
