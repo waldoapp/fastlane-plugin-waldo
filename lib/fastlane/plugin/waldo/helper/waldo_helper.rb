@@ -65,7 +65,11 @@ module Fastlane
 
           body_path = File.join(Dir.tmpdir, "#{app_basename}.zip")
 
-          Actions.sh(%(cd "#{app_dirname}" && zip -qry "#{body_path}" "#{app_basename}"))
+          unless zip(src_path: app_basename,
+                     zip_path: body_path,
+                     cd_path: app_dirname)
+            return nil
+          end
         end
 
         request = Net::HTTP::Post.new(uri.request_uri)
@@ -125,14 +129,16 @@ module Fastlane
       end
 
       def self.upload_build
-        UI.success('Uploading the build to Waldo. This could take a while…')
-
         begin
           @variant_name ||= Actions.lane_context[Actions::SharedValues::GRADLE_BUILD_TYPE]
 
           uri = make_build_uri
 
           request = make_build_request(uri)
+
+          return unless request
+
+          UI.success('Uploading the build to Waldo. This could take a while…')
 
           dump_request(request) if FastlaneCore::Globals.verbose?
 
@@ -189,8 +195,14 @@ module Fastlane
 
           @apk_path.gsub!("\\ ", ' ')
 
-          unless File.file?(@apk_path)
+          unless File.exist?(@apk_path)
             handle_error("Unable to find APK at path '#{@apk_path.to_s}'")
+
+            return false
+          end
+
+          unless File.file?(@apk_path) && File.readable?(@apk_path)
+            handle_error("Unable to read APK at path '#{@apk_path.to_s}'")
 
             return false
           end
@@ -205,16 +217,28 @@ module Fastlane
             @app_path.gsub!("\\ ", ' ')
 
 
-            unless File.directory?(@app_path)
-              handle_error("Unable to find app file at path '#{@app_path.to_s}'")
+            unless File.exist?(@app_path)
+              handle_error("Unable to find app at path '#{@app_path.to_s}'")
+
+              return false
+            end
+
+            unless File.directory?(@app_path) && File.readable?(@app_path)
+              handle_error("Unable to read app at path '#{@app_path.to_s}'")
 
               return false
             end
           elsif @ipa_path
             @ipa_path.gsub!("\\ ", ' ')
 
-            unless File.file?(@ipa_path)
-              handle_error("Unable to find IPA file at path '#{@ipa_path.to_s}'")
+            unless File.exist?(@ipa_path)
+              handle_error("Unable to find IPA at path '#{@ipa_path.to_s}'")
+
+              return false
+            end
+
+            unless File.file?(@ipa_path) && File.readable?(@ipa_path)
+              handle_error("Unable to read IPA at path '#{@ipa_path.to_s}'")
 
               return false
             end
@@ -229,6 +253,24 @@ module Fastlane
           handle_error('Empty variant name for Waldo given')
 
           return false
+        end
+
+        return true
+      end
+
+      def self.zip(src_path:, zip_path:, cd_path:)
+        unless FastlaneCore::CommandExecutor.which('zip')
+            handle_error("Command not found: 'zip'")
+
+            return false
+        end
+
+        FileUtils.cd(cd_path) do
+          unless Actions.sh(%(zip -qry "#{zip_path}" "#{src_path}")).empty?
+            handle_error("Unable to zip app at path '#{src_path.to_s}' into '#{zip_path.to_s}'")
+
+            return false
+          end
         end
 
         return true
