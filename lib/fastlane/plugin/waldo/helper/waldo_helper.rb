@@ -200,10 +200,14 @@ module Fastlane
         @upload_token = params[:upload_token]
         @variant_name = params[:variant_name]
 
+        if @upload_token && @upload_token.empty?
+          @upload_token = nil                       # easier to test
+        end
+
         unless @upload_token
           handle_error('You must pass a nonempty upload token to the Waldo action')
 
-           return false
+          return false
         end
 
         case get_platform
@@ -236,7 +240,6 @@ module Fastlane
 
           if @app_path
             @app_path.gsub!("\\ ", ' ')
-
 
             unless File.exist?(@app_path)
               handle_error("Unable to find app at path '#{@app_path.to_s}'")
