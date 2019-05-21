@@ -51,6 +51,8 @@ module Fastlane
       def self.handle_error(message)
         UI.error(message)
 
+        UI.error('No token for error report upload to Waldo!') unless @upload_token
+
         upload_error(message) if @upload_token
       end
 
@@ -115,16 +117,29 @@ module Fastlane
           URI(uri_string)
       end
 
-      def self.parse_response(response)
+      def self.parse_build_response(response)
         dump_response(response) if FastlaneCore::Globals.verbose?
 
         case response.code.to_i
         when 200..299
           UI.success('Build successfully uploaded to Waldo!')
         when 401
-          handle_error('Upload token is invalid or missing!')
+          handle_error('Token is invalid or missing for build upload to Waldo!')
         else
           handle_error("Build failed to upload to Waldo: #{response.code} #{response.message}")
+        end
+      end
+
+      def self.parse_error_response(response)
+        dump_response(response) if FastlaneCore::Globals.verbose?
+
+        case response.code.to_i
+        when 200..299
+          UI.success('Error report successfully uploaded to Waldo!')
+        when 401
+          UI.error('Token is invalid or missing for error report upload to Waldo!')
+        else
+          UI.error("Error report failed to upload to Waldo: #{response.code} #{response.message}")
         end
       end
 
@@ -145,12 +160,12 @@ module Fastlane
           Net::HTTP.start(uri.host, uri.port, :use_ssl => true) do |http|
             http.read_timeout = 120   # 2 minutes
 
-            parse_response(http.request(request))
+            parse_build_response(http.request(request))
           end
         rescue Net::ReadTimeout => exc
-          handle_error('Upload to Waldo timed out!')
+          handle_error('Build upload to Waldo timed out!')
         rescue => exc
-          handle_error("Something went wrong uploading to Waldo: #{exc.inspect.to_s}")
+          handle_error("Something went wrong uploading build to Waldo: #{exc.inspect.to_s}")
         ensure
           request.body_stream.close if request && request.body_stream
         end
@@ -162,11 +177,17 @@ module Fastlane
 
           request = make_error_request(uri, message)
 
+          UI.error('Uploading error report to Waldo…')
+
+          dump_request(request) if FastlaneCore::Globals.verbose?
+
           Net::HTTP.start(uri.host, uri.port, :use_ssl => true) do |http|
             http.read_timeout = 30  # seconds
 
-            http.request(request)
+            parse_error_response(http.request(request))
           end
+        rescue Net::ReadTimeout => exc
+          UI.error('Error report upload to Waldo timed out!')
         rescue => exc
           UI.error("Something went wrong uploading error report to Waldo: #{exc.inspect.to_s}")
         end
