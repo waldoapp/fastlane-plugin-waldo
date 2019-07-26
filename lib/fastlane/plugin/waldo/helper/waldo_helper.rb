@@ -238,6 +238,14 @@ module Fastlane
             return false
           end
 
+          if @app_path && @ipa_path
+            if File.mtime(@app_path) < File.mtime(@ipa_path)
+              @app_path = nil
+            else
+              @ipa_path = nil
+            end
+          end
+
           if @app_path
             @app_path.gsub!("\\ ", ' ')
 
