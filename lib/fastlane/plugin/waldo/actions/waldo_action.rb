@@ -2,9 +2,11 @@ module Fastlane
   module Actions
     class WaldoAction < Action
       def self.run(params)
-        return unless Helper::WaldoHelper.validate_parameters(params)
+        mparams = Helper::WaldoHelper.filter_parameters(params)
 
-        FastlaneCore::PrintTable.print_values(config: params,
+        return unless Helper::WaldoHelper.validate_parameters(mparams)
+
+        FastlaneCore::PrintTable.print_values(config: mparams,
                                               title: "Summary for waldo #{Fastlane::Waldo::VERSION.to_s}")
 
         Helper::WaldoHelper.upload_build

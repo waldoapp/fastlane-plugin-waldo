@@ -25,6 +25,42 @@ module Fastlane
         puts "#{response.body}"
       end
 
+      def self.filter_parameters(in_params)
+        out_params = {}
+
+        apk_path = in_params[:apk_path]
+        app_path = in_params[:app_path]
+        ipa_path = in_params[:ipa_path]
+        upload_token = in_params[:upload_token]
+        variant_name = in_params[:variant_name]
+
+        apk_path.gsub!("\\ ", ' ') if apk_path
+        app_path.gsub!("\\ ", ' ') if app_path
+        ipa_path.gsub!("\\ ", ' ') if ipa_path
+
+        out_params[:apk_path] = apk_path if apk_path
+
+        if app_path && ipa_path
+          if !File.exist?(app_path)
+            out_params[:ipa_path] = ipa_path
+          elsif !File.exist?(ipa_path)
+            out_params[:app_path] = app_path
+          elsif File.mtime(app_path) < File.mtime(ipa_path)
+            out_params[:ipa_path] = ipa_path
+          else
+            out_params[:app_path] = app_path
+          end
+        else
+          out_params[:app_path] = app_path if app_path
+          out_params[:ipa_path] = ipa_path if ipa_path
+        end
+
+        out_params[:upload_token] = upload_token if upload_token && !upload_token.empty?
+        out_params[:variant_name] = variant_name if variant_name
+
+        out_params
+      end
+
       def self.get_authorization
         "Upload-Token #{@upload_token}"
       end
@@ -200,10 +236,6 @@ module Fastlane
         @upload_token = params[:upload_token]
         @variant_name = params[:variant_name]
 
-        if @upload_token && @upload_token.empty?
-          @upload_token = nil                       # easier to test
-        end
-
         unless @upload_token
           handle_error('You must pass a nonempty upload token to the Waldo action')
 
@@ -217,8 +249,6 @@ module Fastlane
 
             return false
           end
-
-          @apk_path.gsub!("\\ ", ' ')
 
           unless File.exist?(@apk_path)
             handle_error("Unable to find APK at path '#{@apk_path.to_s}'")
@@ -238,17 +268,7 @@ module Fastlane
             return false
           end
 
-          if @app_path && @ipa_path
-            if File.mtime(@app_path) < File.mtime(@ipa_path)
-              @app_path = nil
-            else
-              @ipa_path = nil
-            end
-          end
-
           if @app_path
-            @app_path.gsub!("\\ ", ' ')
-
             unless File.exist?(@app_path)
               handle_error("Unable to find app at path '#{@app_path.to_s}'")
 
@@ -261,8 +281,6 @@ module Fastlane
               return false
             end
           elsif @ipa_path
-            @ipa_path.gsub!("\\ ", ' ')
-
             unless File.exist?(@ipa_path)
               handle_error("Unable to find IPA at path '#{@ipa_path.to_s}'")
 
