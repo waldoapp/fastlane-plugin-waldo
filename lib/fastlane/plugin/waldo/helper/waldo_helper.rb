@@ -1,8 +1,26 @@
+require 'base64'
 require 'net/http'
 
 module Fastlane
   module Helper
     class WaldoHelper
+      def self.convert_commit(sha)
+        puts "Entering convert_commit(#{sha})"
+
+        prefix = 'remotes/origin/'
+        pfxlen = prefix.length
+
+        full_name = get_git_commit_name(sha)
+
+        if full_name.start_with?(prefix)
+          abbr_name = full_name[pfxlen..-1]
+        else
+          abbr_name = "local:#{full_name}"
+        end
+
+        %("#{sha[0..7]}-#{abbr_name}")
+      end
+
       def self.dump_request(request)
         len = request.body ? request.body.length : 0
 
@@ -76,6 +94,38 @@ module Fastlane
         end
       end
 
+      def self.get_git_commit_name(sha)
+        cmd = %(git name-rev --exclude='tags/*' --name-only "#{sha}")
+
+        puts "Calling: #{cmd}" if FastlaneCore::Globals.verbose?
+
+        result = Actions.sh(cmd, log: false).chomp
+
+        puts "#{cmd} => #{result}" if FastlaneCore::Globals.verbose?
+
+        result
+      end
+
+      def self.get_git_commits
+        cmd = %(git log --format=%H -50)
+
+        result = Actions.sh(cmd, log: false).chomp
+
+        puts "#{cmd} => #{result}" if FastlaneCore::Globals.verbose?
+
+        result.split(' ')
+      end
+
+      def self.get_history
+        history = get_git_commits
+
+        return '' unless !history.empty?
+
+        history = history.map { |sha| convert_commit(sha) }
+
+        Base64.strict_encode64("[#{history.join(',')}]")
+      end
+
       def self.get_platform
         Actions.lane_context[Actions::SharedValues::PLATFORM_NAME] || :ios
       end
@@ -90,6 +140,31 @@ module Fastlane
         UI.error('No token for error report upload to Waldo!') unless @upload_token
 
         upload_error(message) if @upload_token
+      end
+
+      def self.has_git_command?
+        cmd = %(which git)
+
+        result = Actions.sh(cmd, log: false).chomp
+
+        puts "#{cmd} => #{result}" if FastlaneCore::Globals.verbose?
+
+        !result.empty?
+      end
+
+      def self.is_git_repository?
+        cmd = %(git rev-parse)
+
+        result = true
+
+        Actions.sh(cmd,
+                   log: false,
+                   error_callback: ->(ignore) { result = false }
+                  ).chomp
+
+        puts "#{cmd} => #{result}" if FastlaneCore::Globals.verbose?
+
+        result
       end
 
       def self.make_build_request(uri)
@@ -128,9 +203,27 @@ module Fastlane
       end
 
       def self.make_build_uri
+        if !has_git_command?
+          history_error = "noGitCommandFound"
+        elsif !is_git_repository?
+          history_error = "notGitRepository"
+        else
+          history = get_history
+        end
+
+        query = ''
+
+        if history
+          query += "&history=#{history}"
+        elsif history_error
+          query += "&historyError=#{history_error}"
+        end
+
+        query += "&variantName=#{@variant_name}" if @variant_name
+
         uri_string = 'https://api.waldo.io/versions'
 
-        uri_string += "?variantName=#{@variant_name}" if @variant_name
+        uri_string += "?#{query[1..-1]}" if !query.empty?
 
         URI(uri_string)
       end
@@ -316,7 +409,13 @@ module Fastlane
         end
 
         FileUtils.cd(cd_path) do
-          unless Actions.sh(%(zip -qry "#{zip_path}" "#{src_path}")).empty?
+          cmd = %(zip -qry "#{zip_path}" "#{src_path}")
+
+          result = Actions.sh(cmd, log: false)
+
+          puts "#{cmd} => #{result}" if FastlaneCore::Globals.verbose?
+
+          unless result.empty?
             handle_error("Unable to zip app at path '#{src_path.to_s}' into '#{zip_path.to_s}'")
 
             return false
