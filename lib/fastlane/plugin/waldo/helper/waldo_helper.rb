@@ -1,4 +1,5 @@
 require 'base64'
+require 'json'
 require 'net/http'
 
 module Fastlane
@@ -48,12 +49,14 @@ module Fastlane
 
         apk_path = in_params[:apk_path]
         app_path = in_params[:app_path]
+        dsym_path = in_params[:dsym_path]
         ipa_path = in_params[:ipa_path]
         upload_token = in_params[:upload_token]
         variant_name = in_params[:variant_name]
 
         apk_path.gsub!("\\ ", ' ') if apk_path
         app_path.gsub!("\\ ", ' ') if app_path
+        dsym_path.gsub!("\\ ", ' ') if dsym_path
         ipa_path.gsub!("\\ ", ' ') if ipa_path
 
         out_params[:apk_path] = apk_path if apk_path
@@ -73,6 +76,7 @@ module Fastlane
           out_params[:ipa_path] = ipa_path if ipa_path
         end
 
+        out_params[:dsym_path] = dsym_path if dsym_path && (app_path || ipa_path)
         out_params[:upload_token] = upload_token if upload_token && !upload_token.empty?
         out_params[:variant_name] = variant_name if variant_name
 
@@ -246,6 +250,43 @@ module Fastlane
           URI(uri_string)
       end
 
+      def self.make_symbols_request(uri)
+        if File.file?(@dsym_path)
+          body_path = @dsym_path
+        else
+          dsym_basename = File.basename(@dsym_path)
+          dsym_dirname = File.dirname(@dsym_path)
+
+          body_path = File.join(Dir.tmpdir, "#{dsym_basename}.zip")
+
+          unless zip(src_path: dsym_basename,
+                     zip_path: body_path,
+                     cd_path: dsym_dirname)
+            return nil
+          end
+        end
+
+        request = Net::HTTP::Post.new(uri.request_uri)
+
+        request['Authorization'] = get_authorization
+        request['Transfer-Encoding'] = 'chunked'
+        request['User-Agent'] = get_user_agent
+
+        request.body_stream = WaldoReadIO.new(body_path)
+        request.content_type = 'application/zip'
+
+        request
+      end
+
+      def self.make_symbols_uri
+          uri_string = 'https://api.waldo.io/versions/'
+
+          uri_string += @build_upload_id
+          uri_string += '/symbols'
+
+          URI(uri_string)
+      end
+
       def self.parse_build_response(response)
         dump_response(response) if FastlaneCore::Globals.verbose?
 
@@ -257,6 +298,10 @@ module Fastlane
         else
           handle_error("Build failed to upload to Waldo: #{response.code} #{response.message}")
         end
+
+        result = JSON.parse(response.body)
+
+        @build_upload_id = result["id"]
       end
 
       def self.parse_error_response(response)
@@ -272,6 +317,19 @@ module Fastlane
         end
       end
 
+      def self.parse_symbols_response(response)
+        dump_response(response) if FastlaneCore::Globals.verbose?
+
+        case response.code.to_i
+        when 200..299
+          UI.success('Symbols successfully uploaded to Waldo!')
+        when 401
+          UI.error('Token is invalid or missing for symbols upload to Waldo!')
+        else
+          UI.error("Symbols failed to upload to Waldo: #{response.code} #{response.message}")
+        end
+      end
+
       def self.upload_build
         begin
           @variant_name ||= Actions.lane_context[Actions::SharedValues::GRADLE_BUILD_TYPE]
@@ -282,12 +340,12 @@ module Fastlane
 
           return unless request
 
-          UI.success('Uploading the build to Waldo. This could take a while…')
+          UI.success('Uploading build to Waldo')
 
           dump_request(request) if FastlaneCore::Globals.verbose?
 
           Net::HTTP.start(uri.host, uri.port, :use_ssl => true) do |http|
-            http.read_timeout = 120   # 2 minutes
+            http.read_timeout = 120 # 2 minutes
 
             parse_build_response(http.request(request))
           end
@@ -306,7 +364,7 @@ module Fastlane
 
           request = make_error_request(uri, message)
 
-          UI.error('Uploading error report to Waldo…')
+          UI.error('Uploading error report to Waldo')
 
           dump_request(request) if FastlaneCore::Globals.verbose?
 
@@ -322,9 +380,38 @@ module Fastlane
         end
       end
 
+      def self.upload_symbols
+        begin
+          return unless @dsym_path
+
+          uri = make_symbols_uri
+
+          request = make_symbols_request(uri)
+
+          return unless request
+
+          UI.success('Uploading symbols to Waldo')
+
+          dump_request(request) if FastlaneCore::Globals.verbose?
+
+          Net::HTTP.start(uri.host, uri.port, :use_ssl => true) do |http|
+            http.read_timeout = 120 # 2 minutes
+
+            parse_symbols_response(http.request(request))
+          end
+        rescue Net::ReadTimeout => exc
+          handle_error('Symbols upload to Waldo timed out!')
+        rescue => exc
+          handle_error("Something went wrong uploading symbols to Waldo: #{exc.inspect.to_s}")
+        ensure
+          request.body_stream.close if request && request.body_stream
+        end
+      end
+
       def self.validate_parameters(params)
         @apk_path = params[:apk_path]
         @app_path = params[:app_path]
+        @dsym_path = params[:dsym_path]
         @ipa_path = params[:ipa_path]
         @upload_token = params[:upload_token]
         @variant_name = params[:variant_name]
@@ -386,6 +473,20 @@ module Fastlane
               return false
             end
           end
+
+          if @dsym_path
+            unless File.exist?(@dsym_path)
+              handle_error("Unable to find symbols at path '#{@dsym_path.to_s}'")
+
+              return false
+            end
+
+            unless (File.directory?(@dsym_path) || File.file?(@dsym_path)) && File.readable?(@dsym_path)
+              handle_error("Unable to read symbols at path '#{@dsym_path.to_s}'")
+
+              return false
+            end
+          end
         else
             handle_error("Unsupported platform: '#{get_platform.to_s}'")
 
@@ -416,7 +517,7 @@ module Fastlane
           puts "#{cmd} => #{result}" if FastlaneCore::Globals.verbose?
 
           unless result.empty?
-            handle_error("Unable to zip app at path '#{src_path.to_s}' into '#{zip_path.to_s}'")
+            handle_error("Unable to zip folder at path '#{src_path.to_s}' into '#{zip_path.to_s}'")
 
             return false
           end

@@ -10,6 +10,7 @@ module Fastlane
                                               title: "Summary for waldo #{Fastlane::Waldo::VERSION.to_s}")
 
         Helper::WaldoHelper.upload_build
+        Helper::WaldoHelper.upload_symbols
       end
 
       def self.authors
@@ -22,6 +23,8 @@ module Fastlane
           apk_path_default = Dir["*.apk"].last || Dir[File.join('app', 'build', 'outputs', 'apk', 'app-release.apk')].last
         when :ios
           app_path_default = Dir["*.app"].sort_by { |x| File.mtime(x) }.last
+          # No default dsym_path for now; user must specify it explicitly:
+          # dsym_path_default = (Dir["./**/*.dSYM"] + Dir["./**/*.dSYM.zip"]).sort_by { |x| File.mtime(x) }.last
           ipa_path_default = Dir["*.ipa"].sort_by { |x| File.mtime(x) }.last
         end
 
@@ -38,6 +41,14 @@ module Fastlane
                                        description: 'Path to your IPA file (optional if you use the _gym_ or _xcodebuild_ action)',
                                        default_value: Actions.lane_context[Actions::SharedValues::IPA_OUTPUT_PATH] || ipa_path_default,
                                        default_value_dynamic: true,
+                                       optional: true),
+          FastlaneCore::ConfigItem.new(key: :dsym_path,
+                                       env_name: 'WALDO_DSYM_PATH',
+                                       # No default dsym_path for now; user must specify it explicitly:
+                                       description: 'Path to your dSYM file(s)',
+                                       # description: 'Path to your dSYM file(s) (optional if you use the _gym_ or _xcodebuild_ action)',
+                                       # default_value: Actions.lane_context[Actions::SharedValues::DSYM_OUTPUT_PATH] || dsym_path_default,
+                                       # default_value_dynamic: true,
                                        optional: true),
           # Android-specific
           FastlaneCore::ConfigItem.new(key: :apk_path,
