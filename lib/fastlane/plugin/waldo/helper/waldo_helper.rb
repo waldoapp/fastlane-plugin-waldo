@@ -130,6 +130,12 @@ module Fastlane
         Base64.strict_encode64("[#{history.join(',')}]")
       end
 
+      def self.get_default_dsym_path
+        path = (Dir["./**/*.dSYM"] + Dir["./**/*.dSYM.zip"]).sort_by { |x| File.mtime(x) }.last
+        dsyms_output_path = Actions.lane_context[Actions::SharedValues::DSYM_OUTPUT_PATH] if defined? Actions::SharedValues::DSYM_OUTPUT_PATH
+        dsyms_output_path || path
+      end
+
       def self.get_platform
         Actions.lane_context[Actions::SharedValues::PLATFORM_NAME] || :ios
       end
