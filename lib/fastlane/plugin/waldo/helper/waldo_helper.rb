@@ -50,6 +50,7 @@ module Fastlane
         apk_path = in_params[:apk_path]
         app_path = in_params[:app_path]
         dsym_path = in_params[:dsym_path]
+        include_symbols = in_params[:include_symbols]
         ipa_path = in_params[:ipa_path]
         upload_token = in_params[:upload_token]
         variant_name = in_params[:variant_name]
@@ -64,19 +65,44 @@ module Fastlane
         if app_path && ipa_path
           if !File.exist?(app_path)
             out_params[:ipa_path] = ipa_path
+
+            app_path = nil
           elsif !File.exist?(ipa_path)
             out_params[:app_path] = app_path
+
+            ipa_path = nil
           elsif File.mtime(app_path) < File.mtime(ipa_path)
             out_params[:ipa_path] = ipa_path
+
+            app_path = nil
           else
             out_params[:app_path] = app_path
+
+            ipa_path = nil
           end
         else
           out_params[:app_path] = app_path if app_path
           out_params[:ipa_path] = ipa_path if ipa_path
         end
 
-        out_params[:dsym_path] = dsym_path if dsym_path && (app_path || ipa_path)
+        if app_path
+            if include_symbols
+                if !dsym_path
+                    tmp_path = "#{app_path}.dSYM.zip"
+                    dsym_path = tmp_path if File.exist?(tmp_path)
+                end
+
+                if !dsym_path
+                    tmp_path = "#{app_path}.dSYM"
+                    dsym_path = tmp_path if File.exist?(tmp_path)
+                end
+            end
+
+            out_params[:dsym_path] = dsym_path if dsym_path
+        else
+            out_params[:dsym_path] = dsym_path if dsym_path && ipa_path
+        end
+
         out_params[:upload_token] = upload_token if upload_token && !upload_token.empty?
         out_params[:variant_name] = variant_name if variant_name
 
