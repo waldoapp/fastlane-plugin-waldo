@@ -4,13 +4,10 @@ module Fastlane
       def self.run(params)
         mparams = Helper::WaldoHelper.filter_parameters(params)
 
-        return unless Helper::WaldoHelper.validate_parameters(mparams)
-
         FastlaneCore::PrintTable.print_values(config: mparams,
                                               title: "Summary for waldo #{Fastlane::Waldo::VERSION.to_s}")
 
-        Helper::WaldoHelper.upload_build
-        Helper::WaldoHelper.upload_symbols
+        Helper::WaldoHelper.upload_build_with_symbols(mparams)
       end
 
       def self.authors
