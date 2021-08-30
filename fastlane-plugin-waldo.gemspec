@@ -19,7 +19,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_development_dependency('bundler')
-  spec.add_development_dependency('fastlane')
+  spec.add_development_dependency('fastlane', '>= 2.192.0')
   spec.add_development_dependency('pry')
   spec.add_development_dependency('rspec')
 end
