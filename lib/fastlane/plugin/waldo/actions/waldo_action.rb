@@ -15,26 +15,16 @@ module Fastlane
       end
 
       def self.available_options
-        case Helper::WaldoHelper.get_platform
-        when :android
-          apk_path_default = Dir["*.apk"].last || Dir[File.join('app', 'build', 'outputs', 'apk', 'app-release.apk')].last
-        when :ios
-          app_path_default = Dir["*.app"].sort_by { |x| File.mtime(x) }.last
-          ipa_path_default = Dir["*.ipa"].sort_by { |x| File.mtime(x) }.last
-        end
-
         [
           # iOS-specific
           FastlaneCore::ConfigItem.new(key: :app_path,
                                        env_name: 'WALDO_APP_PATH',
                                        description: 'Path to your app file',
-                                       default_value: app_path_default,
-                                       default_value_dynamic: true,
                                        optional: true),
           FastlaneCore::ConfigItem.new(key: :ipa_path,
                                        env_name: 'WALDO_IPA_PATH',
                                        description: 'Path to your IPA file (optional if you use the _gym_ or _xcodebuild_ action)',
-                                       default_value: Actions.lane_context[Actions::SharedValues::IPA_OUTPUT_PATH] || ipa_path_default,
+                                       default_value: Actions.lane_context[Actions::SharedValues::IPA_OUTPUT_PATH],
                                        default_value_dynamic: true,
                                        optional: true),
           FastlaneCore::ConfigItem.new(key: :dsym_path,
@@ -51,7 +41,7 @@ module Fastlane
           FastlaneCore::ConfigItem.new(key: :apk_path,
                                        env_name: 'WALDO_APK_PATH',
                                        description: 'Path to your APK file (optional if you use the _gradle_ action)',
-                                       default_value: Actions.lane_context[Actions::SharedValues::GRADLE_APK_OUTPUT_PATH] || apk_path_default,
+                                       default_value: Actions.lane_context[Actions::SharedValues::GRADLE_APK_OUTPUT_PATH],
                                        default_value_dynamic: true,
                                        optional: true),
           # General
