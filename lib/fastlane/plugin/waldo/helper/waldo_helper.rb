@@ -6,15 +6,14 @@ module Fastlane
 
         apk_path = in_params[:apk_path]
         app_path = in_params[:app_path]
-        dsym_path = in_params[:dsym_path]
-        include_symbols = in_params[:include_symbols]
+        git_branch = in_params[:git_branch]
+        git_commit = in_params[:git_commit]
         ipa_path = in_params[:ipa_path]
         upload_token = in_params[:upload_token]
         variant_name = in_params[:variant_name] || Actions.lane_context[Actions::SharedValues::GRADLE_BUILD_TYPE]
 
         apk_path.gsub!("\\ ", ' ') if apk_path
         app_path.gsub!("\\ ", ' ') if app_path
-        dsym_path.gsub!("\\ ", ' ') if dsym_path
         ipa_path.gsub!("\\ ", ' ') if ipa_path
 
         out_params[:apk_path] = apk_path if apk_path
@@ -42,72 +41,88 @@ module Fastlane
           out_params[:ipa_path] = ipa_path if ipa_path
         end
 
-        if app_path
-            out_params[:dsym_path] = dsym_path if dsym_path
-            out_params[:include_symbols] = include_symbols if include_symbols
-        else
-            out_params[:dsym_path] = dsym_path if dsym_path && ipa_path
-        end
-
+        out_params[:git_branch] = git_branch if git_branch
+        out_params[:git_commit] = git_commit if git_commit
         out_params[:upload_token] = upload_token if upload_token
         out_params[:variant_name] = variant_name if variant_name
 
         out_params
       end
 
-      def self.get_flavor
-        case get_platform
-        when :android
-          'Android'
-        when :ios
-          'iOS'
+      def self.get_binary_path
+        platform = RUBY_PLATFORM.downcase
+
+        if platform.include?("linux")
+          ext = ""
+          os = "linux"
+        elsif platform.include?("darwin")
+          ext = ""
+          os = "macos"
+        elsif platform.include?("mswin")
+          ext = ".exe"
+          os = "windows"
         else
-          'unknown'
+          UI.error("Unsupported platform: #{platform}")
         end
-      end
 
-      def self.get_platform
-        Actions.lane_context[Actions::SharedValues::PLATFORM_NAME] || :ios
-      end
+        if platform.include?("arm64")
+          arch = "arm64"
+        elsif platform.include?("x86_64")
+          arch = "x86_64"
+        else
+          UI.error("Unsupported platform: #{platform}")
+        end
 
-      def self.get_script_path
         root = Pathname.new(File.expand_path('../../..', __FILE__))
 
-        File.join(root, 'waldo', 'assets', 'WaldoCLI.sh')
+        File.join(root, "waldo", "assets", "waldo-#{os}-#{arch}#{ext}")
       end
 
-      def self.get_user_agent
-        "Waldo fastlane/#{get_flavor} v#{Fastlane::Waldo::VERSION}"
-      end
-
-      def self.upload_build_with_symbols(params)
+      def self.upload_build(params)
         apk_path = params[:apk_path]
         app_path = params[:app_path]
         ipa_path = params[:ipa_path]
 
         if apk_path
-            build_path = apk_path
+          build_path = apk_path
         elsif app_path
-            build_path = app_path
+          build_path = app_path
         elsif ipa_path
-            build_path = ipa_path
+          build_path = ipa_path
         else
-            build_path = ""
+          build_path = ""
         end
 
         command = []
 
-        command << "WALDO_UPLOAD_TOKEN='#{params[:upload_token]}'"
-        command << "WALDO_USER_AGENT_OVERRIDE='#{get_user_agent}'"
-        command << "WALDO_VARIANT_NAME='#{params[:variant_name]}'" if params[:variant_name]
+        command << "WALDO_WRAPPER_NAME_OVERRIDE='Fastlane'"
+        command << "WALDO_WRAPPER_VERSION_OVERRIDE='#{Fastlane::Waldo::VERSION}'"
 
-        command << get_script_path.shellescape
+        command << get_binary_path.shellescape
 
-        command << '--include_symbols' if params[:include_symbols]
+        if params[:git_branch]
+          command << '--git_branch'
+          command << params[:git_branch]
+        end
+
+        if params[:git_commit]
+          command << '--git_commit'
+          command << params[:git_commit]
+        end
+
+        if params[:upload_token]
+          command << '--upload_token'
+          command << params[:upload_token]
+        end
+
+        if params[:variant_name]
+          command << '--variant_name'
+          command << params[:variant_name]
+        end
+
         command << '--verbose' if FastlaneCore::Globals.verbose?
 
         command << build_path.shellescape
-        command << params[:dsym_path].shellescape if params[:dsym_path]
 
         Actions.sh_control_output(command.join(' '),
                                   print_command: FastlaneCore::Globals.verbose?,

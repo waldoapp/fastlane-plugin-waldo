@@ -7,7 +7,7 @@ module Fastlane
         FastlaneCore::PrintTable.print_values(config: mparams,
                                               title: "Summary for waldo #{Fastlane::Waldo::VERSION.to_s}")
 
-        Helper::WaldoHelper.upload_build_with_symbols(mparams)
+        Helper::WaldoHelper.upload_build(mparams)
       end
 
       def self.authors
@@ -27,16 +27,6 @@ module Fastlane
                                        default_value: Actions.lane_context[Actions::SharedValues::IPA_OUTPUT_PATH],
                                        default_value_dynamic: true,
                                        optional: true),
-          FastlaneCore::ConfigItem.new(key: :dsym_path,
-                                       env_name: 'WALDO_DSYM_PATH',
-                                       description: 'Path to your dSYM file(s)',
-                                       optional: true),
-          FastlaneCore::ConfigItem.new(key: :include_symbols,
-                                       env_name: 'WALDO_INCLUDE_SYMBOLS',
-                                       description: 'Include symbols in upload if true',
-                                       optional: true,
-                                       default_value: false,
-                                       is_string: false),
           # Android-specific
           FastlaneCore::ConfigItem.new(key: :apk_path,
                                        env_name: 'WALDO_APK_PATH',
@@ -47,14 +37,21 @@ module Fastlane
           # General
           FastlaneCore::ConfigItem.new(key: :upload_token,
                                        env_name: 'WALDO_UPLOAD_TOKEN',
-                                       description: 'Waldo upload token',
+                                       description: 'Upload token',
                                        optional: true,
                                        sensitive: true),
           FastlaneCore::ConfigItem.new(key: :variant_name,
                                        env_name: 'WALDO_VARIANT_NAME',
-                                       description: 'Waldo variant name',
-                                       optional: true,
-                                       sensitive: true)
+                                       description: 'Variant name',
+                                       optional: true),
+          FastlaneCore::ConfigItem.new(key: :git_branch,
+                                       env_name: 'WALDO_GIT_BRANCH',
+                                       description: 'Branch name for originating git commit',
+                                       optional: true),
+          FastlaneCore::ConfigItem.new(key: :git_commit,
+                                       env_name: 'WALDO_GIT_COMMIT',
+                                       description: 'Hash of originating git commit',
+                                       optional: true)
         ]
       end
 

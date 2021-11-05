@@ -7,7 +7,7 @@ require 'fastlane/plugin/waldo/version'
 Gem::Specification.new do |spec|
   spec.name          = 'fastlane-plugin-waldo'
   spec.version       = Fastlane::Waldo::VERSION
-  spec.author        = %q{J. G. Pusey}
+  spec.author        = %q{John Pusey}
   spec.email         = %q{john@waldo.io}
 
   spec.summary       = %q{Upload build to Waldo}

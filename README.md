@@ -38,8 +38,7 @@ gym(configuration: 'Release',
     destination: 'generic/platform=iOS Simulator')
 ```
 
-You can then find your app (and associated symbols) relative to the derived
-data path:
+You can then find your app relative to the derived data path:
 
 ```ruby
 app_path = File.join(derived_data_path,
@@ -54,13 +53,11 @@ upload itself is very simple:
 
 ```ruby
 waldo(upload_token: '0123456789abcdef0123456789abcdef',
-      app_path: '/path/to/YourApp.app',
-      include_symbols: true)
+      app_path: '/path/to/YourApp.app')
 ```
 
 > **Note:** You _must_ specify _both_ the Waldo upload token _and_ the path of
-> the `.app`. The `include_symbols` parameter is optional but we highly
-> recommend supplying it.
+> the `.app`.
 
 ### Uploading an iOS Device Build
 
@@ -70,20 +67,17 @@ your IPA, `waldo` will automatically find and upload the generated IPA.
 ```ruby
 gym(export_method: 'ad-hoc')                            # or 'development'
 
-waldo(upload_token: '0123456789abcdef0123456789abcdef',
-      dsym_path: lane_context[SharedValues::DSYM_OUTPUT_PATH])
+waldo(upload_token: '0123456789abcdef0123456789abcdef')
 ```
 
-> **Note:** You _must_ specify the Waldo upload token. The `dsym_path`
-> parameter is optional but we highly recommend supplying it.
+> **Note:** You _must_ specify the Waldo upload token.
 
 If you do _not_ use `gym` to build your IPA, you will need to explicitly
 specify the IPA path to `waldo`:
 
 ```ruby
 waldo(upload_token: '0123456789abcdef0123456789abcdef',
-      ipa_path: '/path/to/YourApp.ipa',
-      dsym_path: '/path/to/YourApp.app.dSYM.zip')
+      ipa_path: '/path/to/YourApp.ipa')
 ```
 
 ### Uploading an Android Build
