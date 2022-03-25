@@ -99,6 +99,7 @@ module Fastlane
         command << "WALDO_WRAPPER_VERSION_OVERRIDE='#{Fastlane::Waldo::VERSION}'"
 
         command << get_binary_path.shellescape
+        command << "upload"
 
         if params[:git_branch]
           command << '--git_branch'
