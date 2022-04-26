@@ -27,7 +27,7 @@ module Fastlane
           UI.error("Unsupported platform: #{platform}")
         end
 
-        "waldo-#{os}-#{arch}#{ext}"
+        "waldo-agent-#{os}-#{arch}#{ext}"
       end
 
       def self.download(uri, path)
@@ -56,11 +56,11 @@ module Fastlane
       def self.download_binary
         asset_name = determine_asset_name
 
-        uri_string = 'https://github.com/waldoapp/waldo-go-cli/releases/latest/download/'
+        uri_string = 'https://github.com/waldoapp/waldo-go-agent/releases/latest/download/'
 
         uri_string += asset_name
 
-        binary_path = File.join(Dir.tmpdir, 'waldo')
+        binary_path = File.join(Dir.tmpdir, 'waldo-agent')
 
         download(URI(uri_string), binary_path)
 
@@ -134,7 +134,7 @@ module Fastlane
 
         command = []
 
-        command << "WALDO_WRAPPER_NAME_OVERRIDE='Fastlane'"
+        command << "WALDO_WRAPPER_NAME_OVERRIDE='Waldo Fastlane Plugin'"
         command << "WALDO_WRAPPER_VERSION_OVERRIDE='#{Fastlane::Waldo::VERSION}'"
 
         command << download_binary.shellescape
