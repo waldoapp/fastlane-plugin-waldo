@@ -59,27 +59,6 @@ waldo(upload_token: '0123456789abcdef0123456789abcdef',
 > **Note:** You _must_ specify _both_ the Waldo upload token _and_ the path of
 > the `.app`.
 
-### Uploading an iOS Device Build
-
-Build a new IPA for your app. If you use `gym` (aka `build_ios_app`) to build
-your IPA, `waldo` will automatically find and upload the generated IPA.
-
-```ruby
-gym(export_method: 'ad-hoc')                            # or 'development'
-
-waldo(upload_token: '0123456789abcdef0123456789abcdef')
-```
-
-> **Note:** You _must_ specify the Waldo upload token.
-
-If you do _not_ use `gym` to build your IPA, you will need to explicitly
-specify the IPA path to `waldo`:
-
-```ruby
-waldo(upload_token: '0123456789abcdef0123456789abcdef',
-      ipa_path: '/path/to/YourApp.ipa')
-```
-
 ### Uploading an Android Build
 
 Build a new APK for your app. If you use `gradle` to build your APK, `waldo`

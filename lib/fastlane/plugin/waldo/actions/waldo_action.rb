@@ -21,12 +21,6 @@ module Fastlane
                                        env_name: 'WALDO_APP_PATH',
                                        description: 'Path to your app file',
                                        optional: true),
-          FastlaneCore::ConfigItem.new(key: :ipa_path,
-                                       env_name: 'WALDO_IPA_PATH',
-                                       description: 'Path to your IPA file (optional if you use the _gym_ or _xcodebuild_ action)',
-                                       default_value: Actions.lane_context[Actions::SharedValues::IPA_OUTPUT_PATH],
-                                       default_value_dynamic: true,
-                                       optional: true),
           # Android-specific
           FastlaneCore::ConfigItem.new(key: :apk_path,
                                        env_name: 'WALDO_APK_PATH',
@@ -71,10 +65,6 @@ module Fastlane
           )",
           "waldo(
             apk_path: './YourApp.apk',
-            upload_token: '...'
-          )",
-          "waldo(
-            ipa_path: './YourApp.ipa',
             upload_token: '...'
           )",
           "waldo(

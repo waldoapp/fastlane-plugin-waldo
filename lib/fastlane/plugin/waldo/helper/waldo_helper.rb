@@ -30,7 +30,7 @@ module Fastlane
         "waldo-agent-#{os}-#{arch}#{ext}"
       end
 
-      def self.download(uri, path)
+      def self.download(uri, path, retryAllowed)
         begin
           request_uri = uri.request_uri
           response = nil
@@ -43,14 +43,26 @@ module Fastlane
             uri = URI.parse(response['location'])
           end
 
+          code = response.code.to_i
+
+          if code < 200 || code > 299
+            UI.error("Unable to download #{request_uri}, HTTP status: #{response.code}")
+
+            return retryAllowed && shouldRetry?(response)
+          end
+
           fp = File.open(path, 'wb')
 
           fp.write(response.body)
         rescue => exc
           UI.error("Unable to download #{request_uri}: #{exc.inspect.to_s}")
+
+          return retryAllowed
         ensure
           fp.close if fp
         end
+
+        return false
       end
 
       def self.download_binary
@@ -62,7 +74,15 @@ module Fastlane
 
         binary_path = File.join(Dir.tmpdir, 'waldo-agent')
 
-        download(URI(uri_string), binary_path)
+		maxDownloadAttempts = 2
+
+		for attempts in 1..maxDownloadAttempts do
+          doRetry = download(URI(uri_string), binary_path, attempts < maxDownloadAttempts)
+
+          break unless doRetry
+
+		  UI.message("Failed download attempts: #{attempts} -- retrying…")
+        end
 
         File.chmod(0755, binary_path)
 
@@ -76,39 +96,14 @@ module Fastlane
         app_path = in_params[:app_path]
         git_branch = in_params[:git_branch]
         git_commit = in_params[:git_commit]
-        ipa_path = in_params[:ipa_path]
         upload_token = in_params[:upload_token]
         variant_name = in_params[:variant_name] || Actions.lane_context[Actions::SharedValues::GRADLE_BUILD_TYPE]
 
         apk_path.gsub!('\\ ', ' ') if apk_path
         app_path.gsub!('\\ ', ' ') if app_path
-        ipa_path.gsub!('\\ ', ' ') if ipa_path
 
         out_params[:apk_path] = apk_path if apk_path
-
-        if app_path && ipa_path
-          if !File.exist?(app_path)
-            out_params[:ipa_path] = ipa_path
-
-            app_path = nil
-          elsif !File.exist?(ipa_path)
-            out_params[:app_path] = app_path
-
-            ipa_path = nil
-          elsif File.mtime(app_path) < File.mtime(ipa_path)
-            out_params[:ipa_path] = ipa_path
-
-            app_path = nil
-          else
-            out_params[:app_path] = app_path
-
-            ipa_path = nil
-          end
-        else
-          out_params[:app_path] = app_path if app_path
-          out_params[:ipa_path] = ipa_path if ipa_path
-        end
-
+        out_params[:app_path] = app_path if app_path
         out_params[:git_branch] = git_branch if git_branch
         out_params[:git_commit] = git_commit if git_commit
         out_params[:upload_token] = upload_token if upload_token
@@ -117,17 +112,18 @@ module Fastlane
         out_params
       end
 
+      def self.shouldRetry?(response)
+        [408, 429, 500, 502, 503, 504].include?(response.code.to_i)
+      end
+
       def self.upload_build(params)
         apk_path = params[:apk_path]
         app_path = params[:app_path]
-        ipa_path = params[:ipa_path]
 
         if apk_path
           build_path = apk_path
         elsif app_path
           build_path = app_path
-        elsif ipa_path
-          build_path = ipa_path
         else
           build_path = ''
         end
