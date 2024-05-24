@@ -1,6 +1,7 @@
 module Fastlane
   module Helper
     class WaldoHelper
+      require 'json'
       require 'net/http'
 
       def self.determine_asset_name
@@ -89,6 +90,12 @@ module Fastlane
         binary_path
       end
 
+      def self.extract_build_id(output)
+        last_line = output.lines(chomp: true).last
+
+		JSON.parse(last_line, {symbolize_names: true})[:appVersionID]
+      end
+
       def self.filter_parameters(in_params)
         out_params = {}
 
@@ -160,11 +167,11 @@ module Fastlane
 
         command << build_path.shellescape
 
-        Actions.sh_control_output(command.join(' '),
-                                  print_command: FastlaneCore::Globals.verbose?,
-                                  print_command_output: true) do |error|
-          # do nothing special, for now
-        end
+        output = Actions.sh_control_output(command.join(' '),
+                                           print_command: FastlaneCore::Globals.verbose?,
+                                           print_command_output: true)
+
+        Actions.lane_context[Actions::SharedValues::WALDO_BUILD_ID] = extract_build_id(output)
       end
     end
   end

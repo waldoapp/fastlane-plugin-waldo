@@ -1,5 +1,9 @@
 module Fastlane
   module Actions
+    module SharedValues
+      WALDO_BUILD_ID = :WALDO_BUILD_ID
+    end
+
     class WaldoAction < Action
       def self.run(params)
         mparams = Helper::WaldoHelper.filter_parameters(params)
@@ -76,6 +80,12 @@ module Fastlane
 
       def self.is_supported?(platform)
         [:android, :ios].include?(platform)
+      end
+
+      def self.output
+        [
+          ['WALDO_BUILD_ID', 'ID of the uploaded build']
+        ]
       end
     end
   end
