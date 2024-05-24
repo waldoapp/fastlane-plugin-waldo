@@ -19,7 +19,7 @@ which allows you to upload an iOS or Android build to Waldo for processing.
 
 ## Usage
 
-To get started, first obtain an upload token from Waldo for your app. These are
+To get started, first obtain a CI token from Waldo for your app. These are
 used to authenticate with the Waldo backend on each call.
 
 ### Uploading an iOS Simulator Build
@@ -44,7 +44,7 @@ You can then find your app relative to the derived data path:
 app_path = File.join(derived_data_path,
                      'Build',
                      'Products',
-                     'ReleaseSim-iphonesimulator',
+                     'Release-iphonesimulator',
                      'YourApp.app')
 ```
 
@@ -56,7 +56,7 @@ waldo(upload_token: '0123456789abcdef0123456789abcdef',
       app_path: '/path/to/YourApp.app')
 ```
 
-> **Note:** You _must_ specify _both_ the Waldo upload token _and_ the path of
+> **Note:** You _must_ specify _both_ the Waldo CI token _and_ the path of
 > the `.app`.
 
 ### Uploading an Android Build
@@ -71,7 +71,7 @@ gradle(task: 'assemble',
 waldo(upload_token: '0123456789abcdef0123456789abcdef')
 ```
 
-> **Note:** You _must_ specify the Waldo upload token.
+> **Note:** You _must_ specify the Waldo CI token.
 
 If you do _not_ use `gradle` to build your APK, you will need to explicitly
 specify the APK path to `waldo`:

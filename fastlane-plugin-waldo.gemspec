@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.name          = 'fastlane-plugin-waldo'
   spec.version       = Fastlane::Waldo::VERSION
   spec.author        = %q{John Pusey}
-  spec.email         = %q{john@waldo.com}
+  spec.email         = %q{j.pusey@tricentis.com}
 
   spec.summary       = %q{Upload build to Waldo}
   spec.homepage      = "https://github.com/waldoapp/fastlane-plugin-waldo"
